@@ -1,0 +1,10 @@
+    # Core Framework
+
+    llama-index-core
+    firecrawl-py
+    llama_cloud>=1.0
+    pinecone[asyncio]
+    requests
+    groq
+    voyageai
+
