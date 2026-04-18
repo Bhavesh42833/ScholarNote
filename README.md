@@ -226,40 +226,69 @@ flowchart LR
 ---
 
 ## 🏗️ Architecture Overview
-
 ```mermaid
 flowchart TB
-    subgraph FE["🖥️ Frontend — Vercel"]
-        UI[Next.js + Tailwind]
+    subgraph FE["🖥️ User Layer"]
+        UI["Frontend (Vercel)<br>Next.js + Tailwind"]
+        USER(("👤 User"))
     end
 
-    subgraph AWS["☁️ AWS"]
-        direction LR
-        AG[API Gateway] --> LR[Routes Lambda]
-        AG --> SQS[SQS Queue]
-        SQS --> LI[Ingestion Lambda]
-        LI --> S3[S3]
-        LI --> DDB[(DynamoDB)]
-        LR --> DDB
+    subgraph AWS["☁️ AWS Infrastructure"]
+        S3["S3<br>(File Storage)"]
+        AG["API Gateway<br>Entry Point"]
+        RL["Routes Lambda<br>Query Handling"]
+        SQS["SQS Queue<br>Job Dispatch"]
+        IL["Ingestion Lambda<br>Async Processing"]
+        DDB["DynamoDB<br>Job Lifecycle"]
     end
 
     subgraph AI["🤖 AI Layer"]
         direction LR
-        PC[(Pinecone)] 
-        GR[Groq LLM]
-        VA[Voyage AI]
-        LP[LlamaParse]
-        FC[Firecrawl]
+        PC["Pinecone<br>Vector Store"]
+        GR["Groq<br>LLM Inference"]
+        VA["Voyage AI<br>Embeddings"]
+        LP["LlamaParse<br>PDF Parsing"]
+        FC["Firecrawl<br>Web Scraping"]
     end
 
-    UI -->|query / upload| AG
-    UI -->|poll job status| AG
-    LI --> LP & FC & VA & PC
-    LR --> GR & PC
+    %% User Interactions
+    UI -->|User Query| USER
+    USER -->|User Upload| UI
 
-    style FE fill:#1e293b,color:#fff,stroke:#4F46E5
-    style AWS fill:#1e293b,color:#fff,stroke:#FF9900
-    style AI fill:#1e293b,color:#fff,stroke:#7C3AED
+    %% Frontend to AWS
+    UI -->|Uploads| S3
+    UI -->|Requests| AG
+
+    %% AWS Internal Routing
+    AG --> SQS
+    AG --> RL
+    S3 --> RL
+    S3 --> IL
+    SQS --> IL
+    IL -->|Status Update| DDB
+
+    %% Connections to AI Layer
+    RL --> GR
+    FC --> RL
+
+    %% --- Thematic Styling ---
+    classDef indigo fill:#4F46E5,color:#fff,stroke:#4F46E5,stroke-width:2px
+    classDef purple fill:#7C3AED,color:#fff,stroke:#7C3AED,stroke-width:2px
+    classDef emerald fill:#059669,color:#fff,stroke:#059669,stroke-width:2px
+
+    %% Apply Indigo (Entry/UI)
+    class USER,UI,AG indigo
+    
+    %% Apply Purple (Compute/Processing/AI)
+    class RL,SQS,IL,PC,GR,VA,LP,FC purple
+    
+    %% Apply Emerald Green (Storage/Data)
+    class S3,DDB emerald
+
+    %% Subgraph borders matched to their dominant content color
+    style FE fill:none,stroke:#4F46E5,stroke-width:2px,stroke-dasharray: 5 5
+    style AWS fill:none,stroke:#059669,stroke-width:2px,stroke-dasharray: 5 5
+    style AI fill:none,stroke:#7C3AED,stroke-width:2px,stroke-dasharray: 5 5
 ```
 
 ---
